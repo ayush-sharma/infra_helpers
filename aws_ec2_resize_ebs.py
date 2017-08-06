@@ -64,10 +64,19 @@ def create_volume(az: str, size: int, volume_type: str, snapshot_id: None):
     
     try:
         
-        params = {'AvailabilityZone': az,
-                  'Encrypted'       : False,
-                  'Size'            : size,
-                  'VolumeType'      : volume_type}
+        params = {'AvailabilityZone' : az,
+                  'Encrypted'        : False,
+                  'Size'             : size,
+                  'VolumeType'       : volume_type,
+                  'TagSpecifications': [{
+                      'ResourceType': 'volume',
+                      'Tags'        : [
+                          {
+                              'Key'  : 'source',
+                              'Value': 'aws_ec2_resize_ebs.py'
+                          },
+                      ]
+                  }]}
         
         if snapshot_id:
             
@@ -255,7 +264,6 @@ def get_volume_object(volume_id: str):
 
 
 def run_ssh_command(user, host, command):
-
     command = 'ssh %s@%s "%s"' % (user, host, command)
     print('>>INFO Running command: %s.' % command)
     
@@ -276,7 +284,7 @@ if __name__ == '__main__':
     parser.add_argument('--target_size', type=int, required=True, help='Target size of volume in GB.')
     
     args = parser.parse_args()
-
+    
     instance_state = get_instance_status(args.instance_id)
     if instance_state == 'stopped':
         start_ec2_instance(args.instance_id)
@@ -336,13 +344,12 @@ if __name__ == '__main__':
         attach_volume(instance_id=args.instance_id, volume_id=clone_volume['VolumeId'], device='/dev/sdy')
         attach_volume(instance_id=args.instance_id, volume_id=new_volume['VolumeId'], device='/dev/sdz')
         
-        exit(1)
-        
         # Run Command
+        print('---- Running copy commands on instance...')
         command = 'sudo mkfs -t ext4 /dev/xvdz; sudo mkdir /mnt/original; sudo mkdir /mnt/new; sudo mount /dev/xvdy1 /mnt/original; sudo mount /dev/xvdz /mnt/new; sudo rsync -aHAXxSP /mnt/original/ /mnt/new; sudo umount /dev/xvdy1; sudo umount /dev/xvdz'
         output = run_ssh_command('ubuntu', '54.80.186.214', command)
         print(output)
-        
+    
     elif args.target_size > root_volume['Size']:
         
         print('---- Expanding volume from %f to %f.' % (root_volume['Size'], args.target_size))
