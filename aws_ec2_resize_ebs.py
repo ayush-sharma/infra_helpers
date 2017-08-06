@@ -1,6 +1,7 @@
 import argparse
 import boto3
 from time import sleep
+from subprocess import call
 
 
 def get_ec2_client():
@@ -20,7 +21,7 @@ def attach_volume(instance_id: str, volume_id: str, device: str):
     
     client = get_ec2_client()
     
-    print('> Attaching volume %s to instance %s on %s.' % (volume_id, instance_id, device))
+    print('INFO>> Attaching volume %s to instance %s on %s.' % (volume_id, instance_id, device))
     
     try:
         
@@ -33,10 +34,11 @@ def attach_volume(instance_id: str, volume_id: str, device: str):
         counter = 0
         while True:
             
-            check = client.describe_volume_status(VolumeIds=[volume_id])['VolumeStatuses']['VolumeStatus']['Status']
+            check = client.describe_volume_status(VolumeIds=[volume_id])
             
-            if check == 'ok':
-                print('>> Volume %s attached successfully to instance %s on %s.' % (volume_id, instance_id, device))
+            if 'VolumeStatuses' in check and len(check['VolumeStatuses']) == 1 and \
+                            check['VolumeStatuses'][0]['VolumeStatus']['Status'] == 'ok':
+                print('OK>> Volume %s attached successfully to instance %s on %s.' % (volume_id, instance_id, device))
                 break
             
             counter += 1
@@ -45,42 +47,44 @@ def attach_volume(instance_id: str, volume_id: str, device: str):
     
     except Exception as e:
         
-        print('>> Coult not attach volume %s to instance %s on %s.' % (volume_id, instance_id, device))
-        print('>> Exception: %s' % str(e))
+        print('ERROR>> Coult not attach volume %s to instance %s on %s.' % (volume_id, instance_id, device))
+        print('ERROR>> Exception: %s' % str(e))
     
     return data
 
 
-def create_volume(az: str, iops: int, size: int, volume_type: str, SnapshotId: None):
+def create_volume(az: str, size: int, volume_type: str, snapshot_id: None):
     """ Create EBS volume. """
     
     data = None
     
     client = get_ec2_client()
     
-    print('> Creating volume of size %s.' % size)
+    print('INFO>> Creating volume of size %s.' % size)
     
     try:
         
         params = {'AvailabilityZone': az,
                   'Encrypted'       : False,
-                  'Iops'            : iops,
                   'Size'            : size,
                   'VolumeType'      : volume_type}
         
-        if SnapshotId:
+        if snapshot_id:
             
-            params['SnapshotId'] = SnapshotId
+            params['SnapshotId'] = snapshot_id
         
         data = client.create_volume(**params)
+        
+        volume_id = data['VolumeId']
         
         counter = 0
         while True:
             
-            check = data.describe_status()['VolumeStatuses'][0]['VolumeStatus']['Status']
+            check = client.describe_volumes(VolumeIds=[volume_id])
             
-            if check == 'ok':
-                print('>> Volume of size %s created successfully.' % size)
+            if 'Volumes' in check and len(check['Volumes']) == 1 and \
+                            check['Volumes'][0]['State'] == 'available':
+                print('OK>> Volume of size %s created successfully and available.' % size)
                 break
             
             counter += 1
@@ -89,8 +93,8 @@ def create_volume(az: str, iops: int, size: int, volume_type: str, SnapshotId: N
     
     except Exception as e:
         
-        print('>> Could not create volume of size %s.' % size)
-        print('>> Exception: %s' % str(e))
+        print('ERROR>> Could not create volume of size %s.' % size)
+        print('ERROR>> Exception: %s' % str(e))
     
     return data
 
@@ -102,19 +106,21 @@ def create_snapshot(volume_id: str):
     
     client = get_ec2_client()
     
-    print('> Creating snapshot of volume %s...' % volume_id)
+    print('INFO>> Creating snapshot of volume %s...' % volume_id)
     
     try:
         
-        data = client.create_snapshot(VolumeId=[volume_id])
+        data = client.create_snapshot(VolumeId=volume_id)
+        
+        snapshot_id = data['SnapshotId']
         
         counter = 0
         while True:
             
-            check = client.describe_snapshots(SnapshotIds=[volume_id])['VolumeStatuses']['VolumeStatus']['Status']
+            check = client.describe_snapshots(SnapshotIds=[snapshot_id])
             
-            if check == 'ok':
-                print('>> Created snapshot of volume %s.' % volume_id)
+            if 'Snapshots' in check and len(check['Snapshots']) == 1 and check['Snapshots'][0]['State'] == 'completed':
+                print('OK>> Created snapshot %s of volume %s.' % (snapshot_id, volume_id))
                 break
             
             counter += 1
@@ -123,10 +129,34 @@ def create_snapshot(volume_id: str):
     
     except Exception as e:
         
-        print('>> Could not create snapshot of volume %s.' % volume_id)
-        print('>> Exception: %s' % str(e))
+        print('DEBUG>> Could not create snapshot of volume %s.' % volume_id)
+        print('DEBUG>> Exception: %s' % str(e))
     
     return data
+
+
+def get_instance_status(instance_id: str):
+    """ Get EC2 instance status. """
+    
+    client = get_ec2_client()
+    
+    print('INFO>> Getting instance status for %s...' % instance_id)
+    
+    counter = 0
+    while True:
+        
+        check = client.describe_instance_status(InstanceIds=[instance_id], IncludeAllInstances=True)
+        
+        if 'InstanceStatuses' in check and len(check['InstanceStatuses']) == 1:
+            
+            print('OK>> Instance status was %s.' % check['InstanceStatuses'][0]['InstanceState']['Name'])
+            return check['InstanceStatuses'][0]['InstanceState']['Name']
+        
+        counter += 1
+        
+        print('DEBUG>> Sleeping for %s seconds...' % counter ** 2)
+        
+        sleep(counter ** 2)
 
 
 def stop_ec2_instance(instance_id: str):
@@ -136,29 +166,23 @@ def stop_ec2_instance(instance_id: str):
     
     client = get_ec2_client()
     
-    print('> Stopping instance %s...' % instance_id)
+    print('INFO>> Stopping instance %s...' % instance_id)
     
     try:
         
         data = client.stop_instances(InstanceIds=[instance_id])
         
-        counter = 0
         while True:
+            state = get_instance_status(instance_id)
             
-            check = client.describe_instance_status(InstanceIds=[instance_id])['InstanceStatuses']['InstanceState']
-            
-            if check == 'stopped':
-                print('>> Instance %s stopped successfully.' % instance_id)
+            if state == 'stopped':
+                print('OK>> Instance %s stopped successfully.' % instance_id)
                 break
-            
-            counter += 1
-            
-            sleep(counter ** 2)
     
     except Exception as e:
         
-        print('>> Could not stop instance %s.' % instance_id)
-        print('>> Exception: %s' % str(e))
+        print('ERROR>> Could not stop instance %s.' % instance_id)
+        print('ERROR>> Exception: %s' % str(e))
     
     return data
 
@@ -170,29 +194,23 @@ def start_ec2_instance(instance_id: str):
     
     client = get_ec2_client()
     
-    print('> Starting instance %s...' % instance_id)
+    print('INFO>> Starting instance %s...' % instance_id)
     
     try:
         
         data = client.start_instances(InstanceIds=[instance_id])
         
-        counter = 0
         while True:
+            state = get_instance_status(instance_id)
             
-            check = client.describe_instance_status(InstanceIds=[instance_id])['InstanceStatuses']['InstanceState']
-            
-            if check == 'running':
-                print('>> Instance %s started successfully.' % instance_id)
+            if state == 'running':
+                print('OK>> Instance %s started successfully.' % instance_id)
                 break
-            
-            counter += 1
-            
-            sleep(counter ** 2)
     
     except Exception as e:
         
-        print('>> Could not start instance %s.' % instance_id)
-        print('>> Exception: %s' % str(e))
+        print('ERROR>> Could not start instance %s.' % instance_id)
+        print('ERROR>> Exception: %s' % str(e))
     
     return data
 
@@ -204,7 +222,7 @@ def get_ec2_info(instance_id: str):
     
     client = get_ec2_client()
     
-    print('> Getting instance info for %s.' % instance_id)
+    print('INFO>> Getting instance info for %s.' % instance_id)
     
     try:
         
@@ -212,7 +230,7 @@ def get_ec2_info(instance_id: str):
     
     except Exception as e:
         
-        print('>> Exception: %s' % str(e))
+        print('ERROR>> Exception: %s' % str(e))
     
     return data
 
@@ -230,10 +248,20 @@ def get_volume_object(volume_id: str):
     
     except Exception as e:
         
-        print('Exception: %s' % str(e))
+        print('ERROR>> Exception: %s' % str(e))
         pass
     
     return data
+
+
+def run_ssh_command(user, host, command):
+
+    command = 'ssh %s@%s "%s"' % (user, host, command)
+    print('>>INFO Running command: %s.' % command)
+    
+    output = call([command], shell=True)
+    
+    return output
 
 
 if __name__ == '__main__':
@@ -248,6 +276,10 @@ if __name__ == '__main__':
     parser.add_argument('--target_size', type=int, required=True, help='Target size of volume in GB.')
     
     args = parser.parse_args()
+
+    instance_state = get_instance_status(args.instance_id)
+    if instance_state == 'stopped':
+        start_ec2_instance(args.instance_id)
     
     instance_info = get_ec2_info(instance_id=args.instance_id)
     
@@ -257,7 +289,6 @@ if __name__ == '__main__':
                    'root_device_name': instance_info['Reservations'][0]['Instances'][0]['RootDeviceName']}
     
     root_volume_id = None
-    
     for block_device in my_instance['block_devices']:
         
         if block_device['DeviceName'] == my_instance['root_device_name']:
@@ -265,7 +296,7 @@ if __name__ == '__main__':
             break
     
     if not root_volume_id:
-        print('- Root volume ID invalid: %s. Exiting.' % root_volume_id)
+        print('- Root volume ID invalid: %s. Exiting.' % str(root_volume_id))
         exit(0)
     
     root_volume = get_volume_object(volume_id=root_volume_id)
@@ -275,40 +306,47 @@ if __name__ == '__main__':
         print('- Shrinking volume from %f to %f.' % (root_volume['Size'], args.target_size))
         
         # Stop Instance
-        print('- Stopping instance...')
+        print('---- Stopping instance...')
         stop_ec2_instance(instance_id=args.instance_id)
         
         # Create snapshot of root volume of the original size
-        print('- Creating snapshot of instance root volume...')
+        print('---- Creating snapshot of instance root volume...')
         root_volume_snapshot = create_snapshot(volume_id=root_volume_id)
         root_volume_snapshot_id = root_volume_snapshot['SnapshotId']
         print('- Root volume snapshot ID is %s.' % root_volume_snapshot_id)
         
+        # Start Instance
+        print('--- Starting instance...')
+        start_ec2_instance(args.instance_id)
+        
         # Create new clone volume of root volume
-        print('- Creating new volume from snapshot of instance root volume...')
-        clone_volume = create_volume(az=root_volume['AvailabilityZone'], iops=root_volume['Iops'],
-                                     size=args.target_size,
-                                     volume_type=root_volume['VolumeType'], SnapshotId=root_volume_snapshot_id)
+        print('---- Creating new volume from snapshot of instance root volume...')
+        clone_volume = create_volume(az=root_volume['AvailabilityZone'],
+                                     size=root_volume['Size'],
+                                     volume_type=root_volume['VolumeType'], snapshot_id=root_volume_snapshot_id)
         
         # Create empty volume of new size
-        print('- Creating empty volume of size %s...' % str(args.target_size))
-        new_volume = create_volume(az=root_volume['AvailabilityZone'], iops=root_volume['Iops'],
+        print('---- Creating empty volume of size %s...' % str(args.target_size))
+        new_volume = create_volume(az=root_volume['AvailabilityZone'],
                                    size=args.target_size,
-                                   volume_type=root_volume['VolumeType'])
+                                   volume_type=root_volume['VolumeType'], snapshot_id=None)
         
         # Attach 2 new volumes to instance
-        print('- Mounting both new volumes in instance...')
+        print('---- Mounting both new volumes in instance...')
         attach_volume(instance_id=args.instance_id, volume_id=clone_volume['VolumeId'], device='/dev/sdy')
         attach_volume(instance_id=args.instance_id, volume_id=new_volume['VolumeId'], device='/dev/sdz')
         
-        # Start Instance
-        print('- Starting instance...')
-        start_ec2_instance(instance_id=args.instance_id)
-    
+        exit(1)
+        
+        # Run Command
+        command = 'sudo mkfs -t ext4 /dev/xvdz; sudo mkdir /mnt/original; sudo mkdir /mnt/new; sudo mount /dev/xvdy1 /mnt/original; sudo mount /dev/xvdz /mnt/new; sudo rsync -aHAXxSP /mnt/original/ /mnt/new; sudo umount /dev/xvdy1; sudo umount /dev/xvdz'
+        output = run_ssh_command('ubuntu', '54.80.186.214', command)
+        print(output)
+        
     elif args.target_size > root_volume['Size']:
         
-        print('- Expanding volume from %f to %f.' % (root_volume['Size'], args.target_size))
+        print('---- Expanding volume from %f to %f.' % (root_volume['Size'], args.target_size))
         pass
     else:
         
-        print('- Volume size change is not required.')
+        print('---- Volume size change is not required.')
