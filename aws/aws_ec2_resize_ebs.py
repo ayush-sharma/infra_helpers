@@ -346,9 +346,17 @@ if __name__ == '__main__':
         
         # Run Command
         print('---- Running copy commands on instance...')
-        command = 'sudo mkfs -t ext4 /dev/xvdz; sudo mkdir /mnt/original; sudo mkdir /mnt/new; sudo mount /dev/xvdy1 /mnt/original; sudo mount /dev/xvdz /mnt/new; sudo rsync -aHAXxSP /mnt/original/ /mnt/new; sudo umount /dev/xvdy1; sudo umount /dev/xvdz'
-        output = run_ssh_command('ubuntu', '54.80.186.214', command)
+        command = 'sudo mkfs -t ext4 /dev/xvdz; sudo mkdir /mnt/original; sudo mkdir /mnt/new; sudo mount /dev/xvdy1 ' \
+                  '/mnt/original; sudo mount /dev/xvdz /mnt/new; sudo rsync -vaxSHAX /mnt/original/ /mnt/new; sudo ' \
+                  'umount /dev/xvdy1; sudo umount /dev/xvdz'
+        output = run_ssh_command('ubuntu', my_instance['public_ip'], command)
         print(output)
+        
+        # Cleaup
+        print('-- Cleanup')
+        print('%s is now the new root volume.' % new_volume['VolumeId'])
+        print('You should original volume %s, clone volume %s, and snapshot %s.' % (
+            root_volume_id, clone_volume['VolumeId'], root_volume_snapshot_id))
     
     elif args.target_size > root_volume['Size']:
         
