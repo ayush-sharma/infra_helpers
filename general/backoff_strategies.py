@@ -2,7 +2,8 @@ from time import sleep
 
 
 def do_something():
-    """ This is our testing function. As long as this function returns false, our retry functions below will keep retrying."""
+    """ This is our testing function. As long as this function returns false, our retry functions below will keep
+    retrying. """
 
     return False
 
