@@ -1,7 +1,7 @@
 # infra_helpers
 Repo for scripts/tools for DevOps things.
 
-## aws_route53_register_deregister_instance.py
+## aws/aws_route53_register_deregister_instance.py
 Script used to add or remove instance public IP to Route 53. Uses weighted routing to divide IPs into buckets.
 
 Usage:
@@ -14,7 +14,10 @@ For example:
 
 For removing entries, use `--action remove`.
 
-## backup_mysql_to_s3.sh
+## general/backoff_strategies.py
+Some code demonstrating different backoff strategies for retrying after transient failures.
+
+## mysql/backup_mysql_to_s3.sh
 Script used to take GZIPed backup of database and upload it to S3.
 
 Usage:
@@ -23,3 +26,4 @@ Usage:
 
 + Add it to cron to automate DB backups.
 + Add lifecycle policies to target S3 bucket to control previous versions.
+
