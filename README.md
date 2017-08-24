@@ -17,6 +17,13 @@ For removing entries, use `--action remove`.
 ## general/backoff_strategies.py
 Some code demonstrating different backoff strategies for retrying after transient failures.
 
+## influxdb/backup_influxdb_to_s3.sh
+Automatically backup all InfluxDB databases to S3.
+
+Usage:
+
+`./backup_influxdb_to_s3.sh s3://example_bucket/folder/`
+
 ## mysql/backup_mysql_to_s3.sh
 Script used to take GZIPed backup of database and upload it to S3.
 
