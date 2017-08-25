@@ -3,7 +3,7 @@
 # Initialize things
 target_bucket=$1
 timestamp=`date +"%s_%d-%B-%Y_%A@%H%M"`
-backup_tmp="/tmp/"`cat /dev/random | tr -dc "[:alpha:]" | head -c 8`
+backup_tmp="/tmp/"`< /dev/urandom tr -dc "[:alnum:]" | head -c10`
 backup_tar_file="influxdb_backup_$timestamp.tar.gz"
 backup_tar_path="/tmp/"
 
@@ -45,7 +45,7 @@ tar cvzf $backup_tar_path$backup_tar_file .
 
 # Upload
 echo `date +"%d-%B-%Y@%H:%M:%S"`" - Uploading $backup_tar_path$backup_tar_file to $target_bucket/$backup_tar_file."
-aws s3 cp $backup_tar_path$backup_tar_file $target_bucket/$backup_tar_file
+aws s3 cp $backup_tar_path$backup_tar_file $target_bucket$backup_tar_file
 
 # Cleanup
 echo `date +"%d-%B-%Y@%H:%M:%S"`" - Cleaning up."
