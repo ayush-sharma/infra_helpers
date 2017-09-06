@@ -14,6 +14,13 @@ For example:
 
 For removing entries, use `--action remove`.
 
+## aws/aws_elb_check_elb.py
+Script to do health check on ELB instances and check HTTP 200 code. Needs AWS ELB DNS and health check path. It will get public IPs of all ELB instances and see if the health check endpoint is being correctly forwarded to the backend instances.
+
+Usage:
+
+`python3 aws_elb_check_elb.py --elb_name http://elb.region.elb.amazon.aws.com --path health_check_path`
+
 ## general/backoff_strategies.py
 Some code demonstrating different backoff strategies for retrying after transient failures.
 
