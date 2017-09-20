@@ -24,6 +24,9 @@ Usage:
 ## general/backoff_strategies.py
 Some code demonstrating different backoff strategies for retrying after transient failures.
 
+## general/post_to_slack.py
+Sample script to post messages to Slack using incoming webhooks.
+
 ## influxdb/backup_influxdb_to_s3.sh
 Automatically backup all InfluxDB databases to S3.
 
