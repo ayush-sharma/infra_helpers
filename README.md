@@ -1,8 +1,85 @@
-# infra_helpers
-Repo for scripts/tools for DevOps things.
+# Infrastructure Helpers
+Those of us who spend our days managing cloud infrastructure have to work with a variety of tools, but a lot of what we do is exactly the same everywhere, and shouldn't require us to write things from scratch.
 
-## aws/aws_route53_register_deregister_instance.py
-Script used to add or remove instance public IP to Route 53. Uses weighted routing to divide IPs into buckets.
+This repository contains helpers scripts that might be useful for infrastructure automation. I'm hoping open-sourcing these will encourage re-use and save us all a lot of time and heartache. If you have a useful script that you think can be used by the larger community, please issue a pull request.
+
+- All scripts should end in the extension indicatiing their programming lanuage: `.sh` for `bash`, `.py` for `Pythong`, etc.
+- Please add **lots of comments** in your code so that users can know what the scripts for without coming back to this readme.
+
+## General Scripts
+
+## backoff_strategies.py
+Python code demonstrating backoff strategies. Useful for retrying remote endpoints after a certain delay if they are temporarily down.
+
+Strategies included:
+
+- No backoff: If things fail, retry immediately.
+- Constant backoff: If things fail, retry after a fixed amount of delay.
+- Linear backoff: If things fail, retry with linearly increasing delays.
+- Fibonacci backoff: If things fail, retry with delays increasing by fibonacci numbers.
+- Exponential backoff: If things fail, retry with exponentially increasing delays.
+- Quadratic backoff: If things fail, retry with polynomially increasing delays.
+- Polynomial backoff: If things fail, retry with polynomially increasing delays.
+
+Usage:
+
+`python3 backoff_strategies.py`
+
+Sample Output:
+
+```bash
+Starting tests with maximum 3 retries.
+> No Backoff > Retry number: 0
+> No Backoff > Retry number: 1
+> No Backoff > Retry number: 2
+> Constant Backoff > Retry number: 0, sleeping for 1 seconds.
+> Constant Backoff > Retry number: 1, sleeping for 1 seconds.
+> Constant Backoff > Retry number: 2, sleeping for 1 seconds.
+> Constant Backoff > Total delay: 3 seconds.
+> Linear Backoff > Retry number: 0, sleeping for 0 seconds.
+> Linear Backoff > Retry number: 1, sleeping for 1 seconds.
+> Linear Backoff > Retry number: 2, sleeping for 2 seconds.
+> Linear Backoff > Total delay: 3 seconds.
+> Fibonacci Backoff > Retry number: 0, sleeping for 0 seconds.
+> Fibonacci Backoff > Retry number: 1, sleeping for 1 seconds.
+> Fibonacci Backoff > Retry number: 2, sleeping for 1 seconds.
+> Fibonacci Backoff > Total delay: 2 seconds.
+> Quadratic Backoff > Retry number: 0, sleeping for 0 seconds.
+> Quadratic Backoff > Retry number: 1, sleeping for 1 seconds.
+> Quadratic Backoff > Retry number: 2, sleeping for 4 seconds.
+> Quadratic Backoff > Total delay: 5 seconds.
+> Exponential Backoff > Retry number: 0, sleeping for 1 seconds.
+> Exponential Backoff > Retry number: 1, sleeping for 2 seconds.
+> Exponential Backoff > Retry number: 2, sleeping for 4 seconds.
+> Exponential Backoff > Total delay: 7 seconds.
+> Polynomial Backoff > Retry number: 0, sleeping for 0 seconds.
+> Polynomial Backoff > Retry number: 1, sleeping for 1 seconds.
+> Polynomial Backoff > Retry number: 2, sleeping for 8 seconds.
+> Polynomial Backoff > Total delay: 9 seconds.
+```
+
+## post_to_slack.py
+Python script to post messages to Slack channel using Slack's incoming webhooks.
+
+- Configure `wekbook_url` in file to point to your Slack's incoming webhooks URL.
+- Configure `data` in file to update the message text that is posted, the user that will post the message, and the user's image icon.
+
+Usage:
+
+`python3 post_to_slack.py`
+
+
+## AWS Scripts (`aws/`)
+
+### aws_elb_check_elb.py
+This script will find all the instances behind an AWS ELB and get the HTTP response status code for a particular path. Useful to find out if the ELB is correctly forwarding requests to the backend instances.
+
+Usage:
+
+`python3 aws_elb_check_elb.py --elb_name http://elb.region.elb.amazon.aws.com --path health_check_path`
+
+### aws_route53_register_deregister_instance.py
+This script will add the public IP of the instance it is running on to a Route 53 DNS record you specify.Uses weighted routing to divide IPs into buckets.
 
 Usage:
 
@@ -14,33 +91,26 @@ For example:
 
 For removing entries, use `--action remove`.
 
-## aws/aws_elb_check_elb.py
-Script to do health check on ELB instances and check HTTP 200 code. Needs AWS ELB DNS and health check path. It will get public IPs of all ELB instances and see if the health check endpoint is being correctly forwarded to the backend instances.
 
-Usage:
+## InfluxDB Scripts
 
-`python3 aws_elb_check_elb.py --elb_name http://elb.region.elb.amazon.aws.com --path health_check_path`
-
-## general/backoff_strategies.py
-Some code demonstrating different backoff strategies for retrying after transient failures.
-
-## general/post_to_slack.py
-Sample script to post messages to Slack using incoming webhooks.
-
-## influxdb/backup_influxdb_to_s3.sh
-Automatically backup all InfluxDB databases to S3.
+## backup_influxdb_to_s3.sh
+Backup all InfluxDB databases to S3.
 
 Usage:
 
 `./backup_influxdb_to_s3.sh s3://example_bucket/folder/`
 
-## mysql/backup_mysql_to_s3.sh
-Script used to take GZIPed backup of database and upload it to S3.
+
+## MySQL Scripts
+
+## backup_mysql_to_s3.sh
+Take `mysqldump`s of all databases on the local system, `gzip` them all, and upload them to AWS S3.
 
 Usage:
 
 `./backup_mysql_to_s3.sh s3://example_bucket/folder/`
 
-+ Add it to cron to automate DB backups.
-+ Add lifecycle policies to target S3 bucket to control previous versions.
+- Add this script to a cron to automate DB backups.
+- Add lifecycle policies to the S3 S3 bucket to control how many last backups to keep.
 
