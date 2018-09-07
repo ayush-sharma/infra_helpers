@@ -19,7 +19,7 @@ def no_backoff(max_retry: int):
             
             return True
         else:
-            # print('> No Backoff > Retry number: %s' % counter)
+            print('> No Backoff > Retry number: %s' % counter)
             pass
         
         counter += 1
@@ -39,7 +39,7 @@ def constant_backoff(max_retry: int):
         else:
             
             sleepy_time = 1
-            # print('> Constant Backoff > Retry number: %s, sleeping for %s seconds.' % (counter, sleepy_time))
+            print('> Constant Backoff > Retry number: %s, sleeping for %s seconds.' % (counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -62,7 +62,7 @@ def linear_backoff(max_retry: int):
         else:
             
             sleepy_time = counter
-            # print('> Linear Backoff > Retry number: %s, sleeping for %s seconds.' % (counter, sleepy_time))
+            print('> Linear Backoff > Retry number: %s, sleeping for %s seconds.' % (counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -95,9 +95,9 @@ def fibonacci_backoff(max_retry: int):
         else:
             
             sleepy_time = get_fib(counter)
-            # print(
-            #         '> Fibonacci Backoff > Retry number: %s, sleeping for %s seconds.' % (
-            #             counter, sleepy_time))
+            print(
+                    '> Fibonacci Backoff > Retry number: %s, sleeping for %s seconds.' % (
+                        counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -120,9 +120,9 @@ def exponential_backoff(max_retry: int):
         else:
             
             sleepy_time = 2 ** counter
-            # print(
-            #         '> Exponential Backoff > Retry number: %s, sleeping for %s seconds.' % (
-            #             counter, sleepy_time))
+            print(
+                    '> Exponential Backoff > Retry number: %s, sleeping for %s seconds.' % (
+                        counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -145,9 +145,9 @@ def quadratic_backoff(max_retry: int):
         else:
             
             sleepy_time = counter ** 2
-            # print(
-            #         '> Quadratic Backoff > Retry number: %s, sleeping for %s seconds.' % (
-            #             counter, sleepy_time))
+            print(
+                    '> Quadratic Backoff > Retry number: %s, sleeping for %s seconds.' % (
+                        counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -170,9 +170,9 @@ def polynomial_backoff(max_retry: int):
         else:
             
             sleepy_time = counter ** 3
-            # print(
-            #         '> Polynomial Backoff > Retry number: %s, sleeping for %s seconds.' % (
-            #             counter, sleepy_time))
+            print(
+                    '> Polynomial Backoff > Retry number: %s, sleeping for %s seconds.' % (
+                        counter, sleepy_time))
             total_delay += sleepy_time
             sleep(sleepy_time)
         
@@ -182,8 +182,9 @@ def polynomial_backoff(max_retry: int):
 
 
 if __name__ == '__main__':
-    max_retries = 20
-    print('Starting experiments with maximum %s retries.' % str(max_retries))
+    
+    max_retries = 3
+    print('Starting tests with maximum %s retries.' % str(max_retries))
     
     no_backoff(max_retry=max_retries)
     constant_backoff(max_retry=max_retries)
