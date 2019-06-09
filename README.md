@@ -6,7 +6,7 @@ This repository contains helpers scripts that might be useful for infrastructure
 - All scripts should end in the extension indicatiing their programming lanuage: `.sh` for `bash`, `.py` for `Pythong`, etc.
 - Please add **lots of comments** in your code so that users can know what the scripts for without coming back to this readme.
 
-## General Scripts
+## General Scripts (`general/`)
 
 ## backoff_strategies.py
 Python code demonstrating backoff strategies. Useful for retrying remote endpoints after a certain delay if they are temporarily down.
@@ -92,7 +92,7 @@ For example:
 For removing entries, use `--action remove`.
 
 
-## InfluxDB Scripts
+## InfluxDB Scripts (`influxdb/`)
 
 ## backup_influxdb_to_s3.sh
 Backup all InfluxDB databases to S3.
@@ -102,7 +102,7 @@ Usage:
 `./backup_influxdb_to_s3.sh s3://example_bucket/folder/`
 
 
-## MySQL Scripts
+## MySQL Scripts (`mysql/`)
 
 ## backup_mysql_to_s3.sh
 Take `mysqldump`s of all databases on the local system, `gzip` them all, and upload them to AWS S3.
@@ -114,3 +114,20 @@ Usage:
 - Add this script to a cron to automate DB backups.
 - Add lifecycle policies to the S3 S3 bucket to control how many last backups to keep.
 
+## Bitbucket scripts (`bitbucket/`)
+
+## report_repos_pipelines.py
+Connect to Bitbucket via OAuth and download a list of all repos and pipelines for that account. Script creates `repos.csv` and `pipelines.csv` as artifacts.
+
+Requirements:
+- `requests`
+- `requests-oauthlib`
+
+Configuration:
+- `c.client_id`: Bitbucket OAuth consumer client_id.
+- `c.client_secret`: Bitbucket OAuth consumer client_secret.
+- `account_id`: Bitbucket account UUID.
+
+Usage:
+
+`python report_repos_pipelines.py`
