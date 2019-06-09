@@ -91,7 +91,6 @@ For example:
 
 For removing entries, use `--action remove`.
 
-
 ## InfluxDB Scripts (`influxdb/`)
 
 ## backup_influxdb_to_s3.sh
@@ -100,7 +99,6 @@ Backup all InfluxDB databases to S3.
 Usage:
 
 `./backup_influxdb_to_s3.sh s3://example_bucket/folder/`
-
 
 ## MySQL Scripts (`mysql/`)
 
@@ -120,13 +118,13 @@ Usage:
 Connect to Bitbucket via OAuth and download a list of all repos and pipelines for that account. Script creates `repos.csv` and `pipelines.csv` as artifacts.
 
 Requirements:
-- `requests`
-- `requests-oauthlib`
+  - `requests`
+  - `requests-oauthlib`
 
 Configuration:
-- `c.client_id`: Bitbucket OAuth consumer client_id.
-- `c.client_secret`: Bitbucket OAuth consumer client_secret.
-- `account_id`: Bitbucket account UUID.
+  - `c.client_id`: Bitbucket OAuth consumer client_id.
+  - `c.client_secret`: Bitbucket OAuth consumer client_secret.
+  - `account_id`: Bitbucket account UUID.
 
 Usage:
 

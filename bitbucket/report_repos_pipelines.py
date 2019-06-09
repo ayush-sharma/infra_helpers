@@ -3,7 +3,6 @@ from urllib import urlencode
 from urlparse import parse_qs, urlsplit, urlunsplit
 import csv
 import json
-import sys
 
 
 class ClientSecrets:
@@ -28,9 +27,9 @@ def get_all_repos(BBClient, next_page_url):
 
         response_dict = json.loads(response.content)
 
-    except:
+    except Exception, e:
 
-        pass
+        print(str(e))
 
     if 'values' in response_dict:
 
@@ -65,9 +64,9 @@ def get_all_pipelines(BBClient, next_page_url):
 
         response_dict = json.loads(response.content)
 
-    except:
+    except Exception, e:
 
-        pass
+        print(str(e))
 
     if 'values' in response_dict:
 
