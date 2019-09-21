@@ -91,6 +91,13 @@ For example:
 
 For removing entries, use `--action remove`.
 
+### lambda_bad_lambda_metrics.py
+Fetches Lambda total errors, total throttles, total invocations and average duration from Singapore, North Virginia and Mumbai (configurable) and writes the information to `my_bad_lambdas.csv`. Aggregates metrics in last one hour by default.
+
+Usage:
+
+`python3 lambda_bad_lambda_metrics.py`
+
 ## InfluxDB Scripts (`influxdb/`)
 
 ## backup_influxdb_to_s3.sh
